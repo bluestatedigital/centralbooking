@@ -1,0 +1,31 @@
+## Go deps, managed by https://github.com/pote/gpm
+## These are a few of my favorite things.
+
+## prod
+github.com/jessevdk/go-flags       1acbbaff2f347c412a0c7884873bd72cc9c1f5b4
+github.com/Sirupsen/logrus         27b713cfd2742876645e3692a488c5e3fd65361d
+github.com/gorilla/mux             9c068cf16d982f8bd444b8c352acbeec34c4fe5b
+
+#github.com/hashicorp/vault/api     v0.3.1
+## want vault config via env var
+github.com/hashicorp/vault/api     673c6d726a526c37f4c6f6dbadd749792bb76cd7
+github.com/aws/aws-sdk-go          v0.10.4
+github.com/hashicorp/consul/api    v0.5.2
+
+## test
+github.com/onsi/ginkgo/ginkgo 39d2c24f8a92c88f7e7f4d8ec6c80d3cc8f5ac65
+github.com/onsi/gomega        2152b45fa28a361beba9aab0885972323a444e28
+github.com/stretchr/testify   67106a5111a06241c8d84952c33214675f51a34a
+
+## test codegen
+github.com/vektra/mockery f30ffd1c032c4a97b3d79c97bf1bb62d926b6d4f
+
+### transitive deps
+
+## required by mockery, I think
+github.com/vektra/errors   c64d83aba85aa4392895aadeefabbd24e89f3580
+## current tip of release-branch.go1.5
+golang.org/x/tools/imports d02228d1857b9f49cd0252788516ff5584266eb6
+
+## required by testify, I think
+github.com/stretchr/objx 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
