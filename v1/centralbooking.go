@@ -2,7 +2,6 @@
 package v1
 
 import (
-    "fmt"
     "net"
     "net/http"
     "io/ioutil"
@@ -12,20 +11,20 @@ import (
 
     "github.com/gorilla/mux"
     
-    "bitbucket.org/bluestatedigital/centralbooking/interfaces"
-    
-    vaultapi "github.com/hashicorp/vault/api"
+    "bitbucket.org/bluestatedigital/centralbooking/instance"
 )
 
 type CentralBooking struct {
-    vaultClient       interfaces.VaultClient
+    registrar         *instance.Registrar
+    vaultEndpoint     string
     consulServerAddrs []string
 }
 
 // returns a new CentralBooking instance
-func NewCentralBooking(vaultClient interfaces.VaultClient, consulServerAddrs []string) *CentralBooking {
+func NewCentralBooking(registrar *instance.Registrar, vaultEndpoint string, consulServerAddrs []string) *CentralBooking {
     return &CentralBooking{
-        vaultClient:       vaultClient,
+        registrar:         registrar,
+        vaultEndpoint:     vaultEndpoint,
         consulServerAddrs: consulServerAddrs,
     }
 }
@@ -43,8 +42,6 @@ func (self *CentralBooking) RegisterInstance(resp http.ResponseWriter, req *http
     var err error
     var remoteAddr string
     
-    vaultEndpoint := self.vaultClient.GetEndpoint()
-    
     if xff, ok := req.Header["X-Forwarded-For"]; ok {
         remoteAddr = xff[0]
     } else {
@@ -57,7 +54,7 @@ func (self *CentralBooking) RegisterInstance(resp http.ResponseWriter, req *http
     
     logEntry := log.WithField("remote_ip", remoteAddr)
     
-    type RegisterRequest struct {
+    type payloadType struct {
         Environment string
         Provider    string
         Account     string
@@ -67,7 +64,7 @@ func (self *CentralBooking) RegisterInstance(resp http.ResponseWriter, req *http
         Policies    []string
     }
     
-    var payload RegisterRequest
+    var payload payloadType
 
     body, err := ioutil.ReadAll(req.Body)
     if err != nil {
@@ -83,89 +80,31 @@ func (self *CentralBooking) RegisterInstance(resp http.ResponseWriter, req *http
         return
     }
     
-    metadata := map[string]string{
-        "environment": payload.Environment,
-        "provider":    payload.Provider,
-        "account":     payload.Account,
-        "region":      payload.Region,
-        "instance_id": payload.Instance_ID,
-        "role":        payload.Role,
-    }
-    
-    logEntry = logEntry.WithFields(log.Fields{
-        "environment": payload.Environment,
-        "provider":    payload.Provider,
-        "account":     payload.Account,
-        "region":      payload.Region,
-        "instance_id": payload.Instance_ID,
-        "role":        payload.Role,
+    logEntry.Info("registering instance")
+    regResp, err := self.registrar.Register(&instance.RegisterRequest{
+        Env:        payload.Environment,
+        Provider:   payload.Provider,
+        Account:    payload.Account,
+        Region:     payload.Region,
+        InstanceID: payload.Instance_ID,
+        Role:       payload.Role,
+        Policies:   payload.Policies,
     })
     
-    // at least one policy must be provided
-    if len(payload.Policies) == 0 {
-        http.Error(resp, "no policies specified", http.StatusBadRequest)
+    if err != nil {
+        sc := http.StatusInternalServerError
+        
+        if _, ok := err.(*instance.ValidationError); ok {
+            sc = http.StatusBadRequest
+        }
+        
+        http.Error(resp, err.Error(), sc)
         return
     }
-    
-    // disallow creating tokens with the root policy
-    for _, p := range payload.Policies {
-        if p == "root" {
-            http.Error(resp, "nice try, bucko", http.StatusForbidden)
-            return
-        }
-    }
-    
-    logEntry.Info("registering instance")
 
-    logEntry.Debug("creating perm token")    
-    permSecret, err := self.vaultClient.CreateToken(&vaultapi.TokenCreateRequest{
-        DisplayName: fmt.Sprintf(
-            "perm instance %s/%s/%s/%s/%s",
-            payload.Environment,
-            payload.Provider,
-            payload.Account,
-            payload.Region,
-            payload.Instance_ID,
-        ),
-        Policies: payload.Policies,
-        Metadata: metadata,
-        Lease: "72h",
-        NoParent: true,
-    })
-    
-    if err != nil {
-        logEntry.Errorf("error creating token: %+v", err)
-    }
-    
-    logEntry.Debug("creating temp token")    
-    tempSecret, err := self.vaultClient.CreateToken(&vaultapi.TokenCreateRequest{
-        DisplayName: fmt.Sprintf(
-            "temp instance %s/%s/%s/%s/%s",
-            payload.Environment,
-            payload.Provider,
-            payload.Account,
-            payload.Region,
-            payload.Instance_ID,
-        ),
-        Metadata: metadata,
-        Lease: "15s",
-        NumUses: 2,
-    })
-    
-    if err != nil {
-        logEntry.Errorf("error creating token: %+v", err)
-    }
-    
-    logEntry.Debug("writing to cubbyhole/perm")    
-    self.vaultClient.
-        WithToken(tempSecret.Auth.ClientToken).
-        WriteSecret("cubbyhole/perm", map[string]interface{}{
-            "payload": permSecret,
-        })
-    
     respBytes, err := json.Marshal(map[string]interface{}{
-        "temp_token":     tempSecret.Auth.ClientToken,
-        "vault_endpoint": vaultEndpoint,
+        "temp_token":     regResp.TempToken,
+        "vault_endpoint": self.vaultEndpoint,
         "consul_servers": self.consulServerAddrs,
     })
     if err != nil {

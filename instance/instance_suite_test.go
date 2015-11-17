@@ -1,4 +1,4 @@
-package v1_test
+package instance_test
 
 import (
     . "github.com/onsi/ginkgo"
@@ -8,8 +8,8 @@ import (
     "github.com/Sirupsen/logrus"
 )
 
-func TestV1(t *testing.T) {
+func TestInstance(t *testing.T) {
     RegisterFailHandler(Fail)
     logrus.SetLevel(logrus.PanicLevel)
-    RunSpecs(t, "v1 Suite")
+    RunSpecs(t, "Instance Suite")
 }

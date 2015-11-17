@@ -11,6 +11,7 @@ import (
     
     "bitbucket.org/bluestatedigital/centralbooking/v1"
     "bitbucket.org/bluestatedigital/centralbooking/helpers"
+    "bitbucket.org/bluestatedigital/centralbooking/instance"
     
     "github.com/gorilla/mux"
 )
@@ -74,7 +75,12 @@ func main() {
     
     router := mux.NewRouter()
     
-    v1 := v1.NewCentralBooking(vaultClient, opts.ConsulServerAddresses)
+    registrar := instance.NewRegistrar(vaultClient)
+    v1 := v1.NewCentralBooking(
+        registrar,
+        vaultClient.GetEndpoint(),
+        opts.ConsulServerAddresses,
+    )
     v1.InstallHandlers(router.PathPrefix("/v1").Subrouter())
     
     httpServer := &http.Server{

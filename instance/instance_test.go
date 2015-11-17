@@ -1,9 +1,8 @@
-package v1_test
+package instance_test
 
 import (
-    "bitbucket.org/bluestatedigital/centralbooking/interfaces"
-    "bitbucket.org/bluestatedigital/centralbooking/v1"
     "bitbucket.org/bluestatedigital/centralbooking/instance"
+    "bitbucket.org/bluestatedigital/centralbooking/interfaces"
     
     vaultapi "github.com/hashicorp/vault/api"
 
@@ -11,92 +10,50 @@ import (
     . "github.com/onsi/gomega"
     
     "github.com/stretchr/testify/mock"
-    
-    "strings"
-    "io/ioutil"
-    "encoding/json"
-    "net/http"
-    "net/http/httptest"
-    "github.com/gorilla/mux"
 )
 
 var _ = Describe("CentralBooking v1", func() {
-    var cb *v1.CentralBooking
-    var router *mux.Router
-    var resp *httptest.ResponseRecorder
+    var registrar *instance.Registrar
 
     var mockVaultClient interfaces.MockVaultClient
     var mockVaultClientTemp interfaces.MockVaultClient
     
     BeforeEach(func() {
-        router = mux.NewRouter()
-        
-        resp = httptest.NewRecorder()
-        
         mockVaultClient = interfaces.MockVaultClient{}
-
         mockVaultClientTemp = interfaces.MockVaultClient{}
 
-        cb = v1.NewCentralBooking(
-            instance.NewRegistrar(&mockVaultClient),
-            "https://vault.example.com/",
-            []string{ "127.0.0.1:8300", "127.0.0.2:8300" },
+        registrar = instance.NewRegistrar(
+            &mockVaultClient,
         )
-        cb.InstallHandlers(router.PathPrefix("/v1").Subrouter())
     })
     
     Describe("instance registration", func() {
-        endpoint := "http://example.com/v1/register/instance"
-        
-        It("should fail with invalid GET verb", func() {
-            req, err := http.NewRequest("GET", endpoint, nil)
-            Expect(err).To(BeNil())
-
-            router.ServeHTTP(resp, req)
-            Expect(resp.Code).To(Equal(404))
-        })
-        
         It("should fail if policies not provided", func() {
-            req, err := http.NewRequest(
-                "POST", endpoint,
-                strings.NewReader(`{
-                    "environment": "dev",
-                    "provider":    "aws",
-                    "account":     "gen",
-                    "region":      "us-east-1",
-                    "instance_id": "i-04c9c4c4",
-                    "role":        "cluster-server"
-                }`),
-            )
-            Expect(err).To(BeNil())
-
-            router.ServeHTTP(resp, req)
-            Expect(resp.Code).To(Equal(400))
-            
-            mockVaultClient.AssertExpectations(GinkgoT())
-            mockVaultClientTemp.AssertExpectations(GinkgoT())
+            req := &instance.RegisterRequest{
+                Env:        "dev",
+                Provider:   "aws",
+                Account:    "gen",
+                Region:     "us-east-1",
+                InstanceID: "i-04c9c4c4",
+                Role:       "cluster-server",
+                Policies:   []string{},
+            }
+            _, err := registrar.Register(req)
+            Expect(err).To(MatchError("no policies specified"))
         })
         
         It("should fail if root policy requested", func() {
-            req, err := http.NewRequest(
-                "POST", endpoint,
-                strings.NewReader(`{
-                    "environment": "dev",
-                    "provider":    "aws",
-                    "account":     "gen",
-                    "region":      "us-east-1",
-                    "instance_id": "i-04c9c4c4",
-                    "role":        "cluster-server",
-                    "policies":    [ "root" ]
-                }`),
-            )
-            Expect(err).To(BeNil())
-
-            router.ServeHTTP(resp, req)
-            Expect(resp.Code).To(Equal(400))
-            
-            mockVaultClient.AssertExpectations(GinkgoT())
-            mockVaultClientTemp.AssertExpectations(GinkgoT())
+            req := &instance.RegisterRequest{
+                Env:        "dev",
+                Provider:   "aws",
+                Account:    "gen",
+                Region:     "us-east-1",
+                InstanceID: "i-04c9c4c4",
+                Role:       "cluster-server",
+                Policies:   []string{ "root" },
+            }
+            _, err := registrar.Register(req)
+            Expect(err).To(MatchError("illegal policy"))
         })
 
         Describe("in aws", func() {
@@ -190,48 +147,24 @@ var _ = Describe("CentralBooking v1", func() {
                     Return(nil, nil).
                     Once()
 
-                // returns payload with temp token, consul server addresses, vault endpoint
-
-                req, err := http.NewRequest(
-                    "POST", endpoint,
-                    strings.NewReader(`{
-                        "environment": "dev",
-                        "provider":    "aws",
-                        "account":     "gen",
-                        "region":      "us-east-1",
-                        "instance_id": "i-04c9c4c4",
-                        "role":        "cluster-server",
-                        
-                        "policies":    ["instance-management"]
-                    }`),
-                )
+                req := &instance.RegisterRequest{
+                    Env:        "dev",
+                    Provider:   "aws",
+                    Account:    "gen",
+                    Region:     "us-east-1",
+                    InstanceID: "i-04c9c4c4",
+                    Role:       "cluster-server",
+                    Policies:   []string{ "instance-management" },
+                }
+                resp, err := registrar.Register(req)
                 Expect(err).To(BeNil())
 
-                router.ServeHTTP(resp, req)
-                Expect(resp.Code).To(Equal(200))
-                
                 mockVaultClient.AssertExpectations(GinkgoT())
                 mockVaultClientTemp.AssertExpectations(GinkgoT())
-                
-                var respPayload map[string]interface{}
-                respBytes, _ := ioutil.ReadAll(resp.Body)
-                Expect(json.Unmarshal(respBytes, &respPayload)).To(BeNil())
-                
-                Expect(respPayload["temp_token"]).To(Equal("generated-temp-token"), "temp token")
-                Expect(respPayload["vault_endpoint"]).To(Equal("https://vault.example.com/"), "vault endpoint")
-                Expect(respPayload["consul_servers"]).To(ContainElement("127.0.0.2:8300"), "missing consul servers")
 
-                // validate the payload of the cubbyhole/perm secret
-                writePermSecretCall := mockVaultClientTemp.Calls[0]
-                Expect(writePermSecretCall.Method).To(Equal("WriteSecret"))
-                
-                permData := writePermSecretCall.Arguments.Get(1).(map[string]interface{})
-                Expect(permData["payload"]).To(BeAssignableToTypeOf(&vaultapi.Secret{}))
-                
-                secretPayload := permData["payload"].(*vaultapi.Secret)
-                Expect(secretPayload.Auth.ClientToken).To(Equal("generated-perm-token"), "incorrect perm token")
+                // returns payload with temp token, consul server addresses, vault endpoint
 
-                // the rest of the payload should be fine
+                Expect(resp.TempToken).To(Equal("generated-temp-token"), "temp token")
             })
         })
     })
