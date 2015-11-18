@@ -1,2 +1,3 @@
 interfaces/mock_*.go
 .godeps/
+stage/
