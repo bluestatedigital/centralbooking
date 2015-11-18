@@ -2,7 +2,7 @@
 NAME=centralbooking
 
 ## the go-get'able path
-PKG_PATH=bitbucket.org/bluestatedigital/$(NAME)
+PKG_PATH=github.com/bluestatedigital/$(NAME)
 
 ## version, taken from Git tag (like v1.0.0) or hash
 VER:=$(shell (git describe --always --dirty 2>/dev/null || echo "¯\\\\\_\\(ツ\\)_/¯") | sed -e 's/^v//g' )

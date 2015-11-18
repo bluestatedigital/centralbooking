@@ -1,9 +1,9 @@
 package v1_test
 
 import (
-    "bitbucket.org/bluestatedigital/centralbooking/interfaces"
-    "bitbucket.org/bluestatedigital/centralbooking/v1"
-    "bitbucket.org/bluestatedigital/centralbooking/instance"
+    "github.com/bluestatedigital/centralbooking/interfaces"
+    "github.com/bluestatedigital/centralbooking/v1"
+    "github.com/bluestatedigital/centralbooking/instance"
     
     vaultapi "github.com/hashicorp/vault/api"
 

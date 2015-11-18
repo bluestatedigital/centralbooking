@@ -1,8 +1,8 @@
 package instance_test
 
 import (
-    "bitbucket.org/bluestatedigital/centralbooking/instance"
-    "bitbucket.org/bluestatedigital/centralbooking/interfaces"
+    "github.com/bluestatedigital/centralbooking/instance"
+    "github.com/bluestatedigital/centralbooking/interfaces"
     
     vaultapi "github.com/hashicorp/vault/api"
 

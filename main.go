@@ -9,9 +9,9 @@ import (
     flags "github.com/jessevdk/go-flags"
     log "github.com/Sirupsen/logrus"
     
-    "bitbucket.org/bluestatedigital/centralbooking/v1"
-    "bitbucket.org/bluestatedigital/centralbooking/helpers"
-    "bitbucket.org/bluestatedigital/centralbooking/instance"
+    "github.com/bluestatedigital/centralbooking/v1"
+    "github.com/bluestatedigital/centralbooking/helpers"
+    "github.com/bluestatedigital/centralbooking/instance"
     
     "github.com/gorilla/mux"
 )

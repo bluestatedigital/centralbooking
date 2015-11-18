@@ -1,7 +1,7 @@
 package helpers
 
 import (
-    "bitbucket.org/bluestatedigital/centralbooking/interfaces"
+    "github.com/bluestatedigital/centralbooking/interfaces"
     "github.com/hashicorp/vault/api"
 )
 

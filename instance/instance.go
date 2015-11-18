@@ -7,7 +7,7 @@ import (
     "fmt"
     "errors"
     
-    "bitbucket.org/bluestatedigital/centralbooking/interfaces"
+    "github.com/bluestatedigital/centralbooking/interfaces"
     
     vaultapi "github.com/hashicorp/vault/api"
 )

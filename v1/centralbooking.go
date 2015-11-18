@@ -11,7 +11,7 @@ import (
 
     "github.com/gorilla/mux"
     
-    "bitbucket.org/bluestatedigital/centralbooking/instance"
+    "github.com/bluestatedigital/centralbooking/instance"
 )
 
 type CentralBooking struct {
