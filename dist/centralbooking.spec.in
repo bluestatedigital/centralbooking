@@ -3,7 +3,6 @@
 
 Name:      centralbooking
 Version:   @VERSION@
-Epoch:     @EPOCH@
 Release:   1%{?dist}
 Summary:   Central registration authority for dynamic instances
 License:   WTFPL
