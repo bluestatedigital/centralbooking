@@ -32,6 +32,7 @@ rm -rf %{buildroot}
 install -d \
     %{buildroot}%{_bindir} \
     %{buildroot}%{_unitdir} \
+    %{buildroot}%{_var}/lib/%{name} \
     %{buildroot}%{_var}/log/%{name}
 
 install -m 0555 -t %{buildroot}%{_bindir}/ stage/%{name}
