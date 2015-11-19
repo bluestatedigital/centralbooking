@@ -35,6 +35,12 @@ func (self *CentralBooking) InstallHandlers(router *mux.Router) {
         Methods("POST").
         Path("/register/instance").
         HandlerFunc(self.RegisterInstance)
+
+    // apeing vault
+    router.
+        Methods("GET").
+        Path("/sys/health").
+        HandlerFunc(self.CheckHealth)
 }
 
 // returns the index view
@@ -116,4 +122,8 @@ func (self *CentralBooking) RegisterInstance(resp http.ResponseWriter, req *http
     resp.Header().Add("Content-Type", "application/json")
     resp.WriteHeader(http.StatusOK)
     resp.Write(respBytes)
+}
+
+func (self *CentralBooking) CheckHealth(resp http.ResponseWriter, req *http.Request) {
+    resp.WriteHeader(http.StatusNoContent)
 }

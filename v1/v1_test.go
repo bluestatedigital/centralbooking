@@ -235,4 +235,16 @@ var _ = Describe("CentralBooking v1", func() {
             })
         })
     })
+
+    Describe("health check", func() {
+        endpoint := "http://example.com/v1/sys/health"
+
+        It("should pass", func() {
+            req, err := http.NewRequest("GET", endpoint, nil)
+            Expect(err).To(BeNil())
+
+            router.ServeHTTP(resp, req)
+            Expect(resp.Code).To(Equal(204))
+        })
+    })
 })
