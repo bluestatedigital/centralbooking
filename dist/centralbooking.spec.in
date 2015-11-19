@@ -1,0 +1,72 @@
+## *** ERROR: No build ID note found in /rpmbuild/BUILDROOT/centralbooking-1bdeb16f591cbf5f77773c9554a6d20ee549e223-1.el7.centos.x86_64/usr/bin/centralbooking
+%global debug_package %{nil} 
+
+Name:      centralbooking
+Version:   @VERSION@
+Epoch:     @EPOCH@
+Release:   1%{?dist}
+Summary:   Central registration authority for dynamic instances
+License:   WTFPL
+Source0:   centralbooking-%{version}.tar
+
+BuildRoot: %{_tmppath}/%{name}-%{version}-root
+
+## also golang, but go 1.5 isn't available via an rpm right now
+BuildRequires: make git
+## need some macros
+BuildRequires: systemd
+
+%systemd_requires
+
+%description
+(none)
+
+%prep
+%setup -c -n centralbooking -q
+
+%build
+make
+
+%install
+rm -rf %{buildroot}
+
+install -d \
+    %{buildroot}%{_bindir} \
+    %{buildroot}%{_unitdir} \
+    %{buildroot}%{_var}/log/%{name}
+
+install -m 0555 -t %{buildroot}%{_bindir}/%{name} stage/%{name}
+install -m 0444 -t %{buildroot}%{_unitdir}/%{name}.service dist/%{name}.service
+
+%clean
+rm -rf %{buildroot}
+
+## https://fedoraproject.org/wiki/Packaging:ScriptletSnippets
+
+%pre
+if [ $1 == 0 ]; then
+    ## install
+    useradd --system --home-dir %{_var}/lib/centralbooking cntrlbook
+fi
+
+%post
+%systemd_post %{name}.service
+
+%preun
+%systemd_preun %{name}.service
+
+%postun
+%systemd_postun_with_restart %{name}.service
+if [ $1 == 0 ]; then
+    ## removed
+    userdel --remove cntrlbook
+fi
+
+%files
+%doc README.md
+
+%{_bindir}/%{name}
+%{_unitdir}/%{name}.service
+
+%dir %attr(0700,cntrlbook,cntrlbook) %{_var}/lib/%{name}
+%dir %attr(0700,cntrlbook,cntrlbook) %{_var}/log/%{name}
