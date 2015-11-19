@@ -28,7 +28,7 @@ type Options struct {
     VaultToken string `env:"VAULT_TOKEN" long:"vault-token" description:"auth token for this application" required:"true"`
     
     // @todo kludge until I figure out how to retrieve the list of consul servers for the wan pool
-    ConsulServerAddresses []string `env:"CONSUL_SERVER_ADDRS" long:"consul-server-addr" description:"consul server addresses sent to clients so they can join the wan pool" required:"true"`
+    ConsulServerAddresses []string `env:"CONSUL_SERVER_ADDRS" env-delim:"," long:"consul-server-addr" description:"consul server addresses sent to clients so they can join the wan pool" required:"true"`
 }
 
 func Log(handler http.Handler) http.Handler {
