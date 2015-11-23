@@ -44,8 +44,8 @@ rm -rf %{buildroot}
 ## https://fedoraproject.org/wiki/Packaging:ScriptletSnippets
 
 %pre
-if [ $1 == 0 ]; then
-    ## install
+if [ $1 == 1 ]; then
+    ## first version installed
     useradd --system --home-dir %{_var}/lib/centralbooking cntrlbook
 fi
 
@@ -58,7 +58,7 @@ fi
 %postun
 %systemd_postun_with_restart %{name}.service
 if [ $1 == 0 ]; then
-    ## removed
+    ## last version removed
     userdel --remove cntrlbook
 fi
 
