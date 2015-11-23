@@ -244,7 +244,7 @@ var _ = Describe("CentralBooking v1", func() {
             Expect(err).To(BeNil())
 
             router.ServeHTTP(resp, req)
-            Expect(resp.Code).To(Equal(204))
+            Expect(resp.Code).To(Equal(200))
         })
     })
 })

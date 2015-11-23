@@ -125,5 +125,8 @@ func (self *CentralBooking) RegisterInstance(resp http.ResponseWriter, req *http
 }
 
 func (self *CentralBooking) CheckHealth(resp http.ResponseWriter, req *http.Request) {
-    resp.WriteHeader(http.StatusNoContent)
+    resp.WriteHeader(http.StatusOK)
+
+    // http://labs.omniti.com/labs/jsend
+    resp.Write([]byte(`{"status":"success"}`))
 }
