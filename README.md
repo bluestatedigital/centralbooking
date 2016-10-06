@@ -40,10 +40,23 @@ response:
 
     VAULT_TOKEN="<temp_token from above>" vault read cubbyhole/perm
 
+## making the consul wan addresses available
+
+Consul doesn't expose the WAN address of a server node via any of the APIs.  The WAN address may be different if you're using a public IP for the server.  A workaround for that is to create your own service definition on the server nodes with the port and address of the Serf WAN endpoint.  For example:
+
+    {
+        "service": {
+            "name": "consul-wan", 
+            "address": "192.168.42.42", 
+            "port": 8302
+        }
+    }
+
+Consul 0.7.0 started exposing `TaggedAddresses`, which does include `wan` for the `consul` service, but the port for that service is 8300 and we need 8302.  ¯\\_(ツ)_/¯ 
+
 # @todos
 
 * include the Consul ACL datacenter
-* build list of Consul servers dynamically
 * validate the instance against the cloud provider
 * record instance metadata in Consul
 

@@ -6,6 +6,7 @@ import (
     "github.com/bluestatedigital/centralbooking/instance"
     
     vaultapi "github.com/hashicorp/vault/api"
+    consulapi "github.com/hashicorp/consul/api"
 
     . "github.com/onsi/ginkgo"
     . "github.com/onsi/gomega"
@@ -26,6 +27,7 @@ var _ = Describe("CentralBooking v1", func() {
     var resp *httptest.ResponseRecorder
 
     var mockVaultClient interfaces.MockVaultClient
+    var mockConsulCatalog interfaces.MockConsulCatalog
     var mockVaultClientTemp interfaces.MockVaultClient
     
     BeforeEach(func() {
@@ -34,13 +36,14 @@ var _ = Describe("CentralBooking v1", func() {
         resp = httptest.NewRecorder()
         
         mockVaultClient = interfaces.MockVaultClient{}
+        mockConsulCatalog = interfaces.MockConsulCatalog{}
 
         mockVaultClientTemp = interfaces.MockVaultClient{}
 
         cb = v1.NewCentralBooking(
             instance.NewRegistrar(&mockVaultClient),
+            &mockConsulCatalog,
             "https://vault.example.com/",
-            []string{ "127.0.0.1:8300", "127.0.0.2:8300" },
         )
         cb.InstallHandlers(router.PathPrefix("/v1").Subrouter())
     })
@@ -74,6 +77,7 @@ var _ = Describe("CentralBooking v1", func() {
             Expect(resp.Code).To(Equal(400))
             
             mockVaultClient.AssertExpectations(GinkgoT())
+            mockConsulCatalog.AssertExpectations(GinkgoT())
             mockVaultClientTemp.AssertExpectations(GinkgoT())
         })
         
@@ -96,6 +100,7 @@ var _ = Describe("CentralBooking v1", func() {
             Expect(resp.Code).To(Equal(400))
             
             mockVaultClient.AssertExpectations(GinkgoT())
+            mockConsulCatalog.AssertExpectations(GinkgoT())
             mockVaultClientTemp.AssertExpectations(GinkgoT())
         })
 
@@ -189,6 +194,24 @@ var _ = Describe("CentralBooking v1", func() {
                     On("WriteSecret", "cubbyhole/perm", mock.AnythingOfType("map[string]interface {}")).
                     Return(nil, nil).
                     Once()
+                
+                mockConsulCatalog.
+                    On("Service", "consul-wan", "", mock.AnythingOfType("*api.QueryOptions")).
+                    Return(
+                        []*consulapi.CatalogService{
+                            &consulapi.CatalogService{
+                                Node:                     "cluster-server-f022e6e6",
+                                Address:                  "10.112.16.35",
+                                ServiceID:                "consul-wan",
+                                ServiceName:              "consul-wan",
+                                ServiceAddress:           "127.0.0.2",
+                                ServicePort:              8302,
+                                ServiceEnableTagOverride: false,
+                            },
+                        },
+                        nil,
+                        nil,
+                    )
 
                 // returns payload with temp token, consul server addresses, vault endpoint
 
@@ -211,6 +234,7 @@ var _ = Describe("CentralBooking v1", func() {
                 Expect(resp.Code).To(Equal(200))
                 
                 mockVaultClient.AssertExpectations(GinkgoT())
+                mockConsulCatalog.AssertExpectations(GinkgoT())
                 mockVaultClientTemp.AssertExpectations(GinkgoT())
                 
                 var respPayload map[string]interface{}
@@ -219,7 +243,7 @@ var _ = Describe("CentralBooking v1", func() {
                 
                 Expect(respPayload["temp_token"]).To(Equal("generated-temp-token"), "temp token")
                 Expect(respPayload["vault_endpoint"]).To(Equal("https://vault.example.com/"), "vault endpoint")
-                Expect(respPayload["consul_servers"]).To(ContainElement("127.0.0.2:8300"), "missing consul servers")
+                Expect(respPayload["consul_servers"]).To(ContainElement("127.0.0.2:8302"), "missing consul servers")
 
                 // validate the payload of the cubbyhole/perm secret
                 writePermSecretCall := mockVaultClientTemp.Calls[0]

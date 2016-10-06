@@ -2,6 +2,7 @@
 package v1
 
 import (
+    "fmt"
     "net"
     "net/http"
     "io/ioutil"
@@ -12,20 +13,21 @@ import (
     "github.com/gorilla/mux"
     
     "github.com/bluestatedigital/centralbooking/instance"
+    "github.com/bluestatedigital/centralbooking/interfaces"
 )
 
 type CentralBooking struct {
     registrar         *instance.Registrar
+    consulCatalog     interfaces.ConsulCatalog
     vaultEndpoint     string
-    consulServerAddrs []string
 }
 
 // returns a new CentralBooking instance
-func NewCentralBooking(registrar *instance.Registrar, vaultEndpoint string, consulServerAddrs []string) *CentralBooking {
+func NewCentralBooking(registrar *instance.Registrar, catalog interfaces.ConsulCatalog, vaultEndpoint string) *CentralBooking {
     return &CentralBooking{
         registrar:         registrar,
+        consulCatalog:     catalog,
         vaultEndpoint:     vaultEndpoint,
-        consulServerAddrs: consulServerAddrs,
     }
 }
 
@@ -108,10 +110,22 @@ func (self *CentralBooking) RegisterInstance(resp http.ResponseWriter, req *http
         return
     }
 
+    svcs, _, err := self.consulCatalog.Service("consul-wan", "", nil)
+    if err != nil {
+        log.Errorf("unable to retrieve consul-wan service: %s", err)
+        http.Error(resp, "unable to retrieve consul-wan service", http.StatusInternalServerError)
+        return
+    }
+
+    consulServers := make([]string, 0, len(svcs))
+    for _, svc := range svcs {
+        consulServers = append(consulServers, fmt.Sprintf("%s:%d", svc.ServiceAddress, svc.ServicePort))
+    }
+
     respBytes, err := json.Marshal(map[string]interface{}{
         "temp_token":     regResp.TempToken,
         "vault_endpoint": self.vaultEndpoint,
-        "consul_servers": self.consulServerAddrs,
+        "consul_servers": consulServers,
     })
     if err != nil {
         log.Errorf("unable to marshal response body: %s", err)

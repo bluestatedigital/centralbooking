@@ -147,6 +147,7 @@ var _ = Describe("CentralBooking v1", func() {
                     Return(nil, nil).
                     Once()
 
+                // start the test (*phew!*)
                 req := &instance.RegisterRequest{
                     Env:        "dev",
                     Provider:   "aws",

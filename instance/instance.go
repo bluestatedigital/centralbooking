@@ -1,6 +1,5 @@
-package instance
-
 // instance registration
+package instance
 
 import (
     log "github.com/Sirupsen/logrus"

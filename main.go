@@ -13,6 +13,8 @@ import (
     "github.com/bluestatedigital/centralbooking/helpers"
     "github.com/bluestatedigital/centralbooking/instance"
     
+    consulapi "github.com/hashicorp/consul/api"
+    
     "github.com/gorilla/mux"
 )
 
@@ -26,9 +28,6 @@ type Options struct {
     
     VaultAddr  string `env:"VAULT_ADDR"  long:"vault-addr"  description:"address of the Vault server"     required:"true"`
     VaultToken string `env:"VAULT_TOKEN" long:"vault-token" description:"auth token for this application" required:"true"`
-    
-    // @todo kludge until I figure out how to retrieve the list of consul servers for the wan pool
-    ConsulServerAddresses []string `env:"CONSUL_SERVER_ADDRS" env-delim:"," long:"consul-server-addr" description:"consul server addresses sent to clients so they can join the wan pool" required:"true"`
 }
 
 func Log(handler http.Handler) http.Handler {
@@ -72,14 +71,17 @@ func main() {
     
     vaultClient, err := helpers.NewVaultClient(opts.VaultAddr, opts.VaultToken)
     checkError("creating Vault client", err)
+
+    consulClient, err := consulapi.NewClient(consulapi.DefaultConfig())    
+    checkError("creating Consul client", err)
     
     router := mux.NewRouter()
     
     registrar := instance.NewRegistrar(vaultClient)
     v1 := v1.NewCentralBooking(
         registrar,
+        consulClient.Catalog(),
         vaultClient.GetEndpoint(),
-        opts.ConsulServerAddresses,
     )
     v1.InstallHandlers(router.PathPrefix("/v1").Subrouter())
     

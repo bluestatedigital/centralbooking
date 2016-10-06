@@ -4,18 +4,16 @@
 ## prod
 github.com/jessevdk/go-flags       1acbbaff2f347c412a0c7884873bd72cc9c1f5b4
 github.com/Sirupsen/logrus         27b713cfd2742876645e3692a488c5e3fd65361d
-github.com/gorilla/mux             9c068cf16d982f8bd444b8c352acbeec34c4fe5b
+github.com/gorilla/mux             757bef944d0f21880861c2dd9c871ca543023cba
 
-#github.com/hashicorp/vault/api     v0.3.1
-## want vault config via env var
-github.com/hashicorp/vault/api     673c6d726a526c37f4c6f6dbadd749792bb76cd7
-github.com/aws/aws-sdk-go          v0.10.4
-github.com/hashicorp/consul/api    v0.5.2
+github.com/hashicorp/vault/api     v0.6.2
+github.com/aws/aws-sdk-go          v1.4.12
+github.com/hashicorp/consul/api    v0.7.0
 
 ## test
 github.com/onsi/ginkgo/ginkgo 39d2c24f8a92c88f7e7f4d8ec6c80d3cc8f5ac65
 github.com/onsi/gomega        2152b45fa28a361beba9aab0885972323a444e28
-github.com/stretchr/testify   67106a5111a06241c8d84952c33214675f51a34a
+github.com/stretchr/testify   v1.1.4
 
 ## test codegen
 github.com/vektra/mockery f30ffd1c032c4a97b3d79c97bf1bb62d926b6d4f
