@@ -56,6 +56,9 @@ Consul 0.7.0 started exposing `TaggedAddresses`, which does include `wan` for th
 
 # @todos
 
+* renew vault token
+* renew any leases created for our own purposes
+* validate vault token for health check
 * include the Consul ACL datacenter
 * validate the instance against the cloud provider
 * record instance metadata in Consul
