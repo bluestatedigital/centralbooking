@@ -70,7 +70,7 @@ func (self *Registrar) Register(req *RegisterRequest) (*RegisterResponse, error)
         ),
         Policies: req.Policies,
         Metadata: metadata,
-        Lease: "72h",
+        Period: "72h",
         NoParent: true,
     })
     

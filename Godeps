@@ -6,9 +6,9 @@ github.com/jessevdk/go-flags       1acbbaff2f347c412a0c7884873bd72cc9c1f5b4
 github.com/Sirupsen/logrus         27b713cfd2742876645e3692a488c5e3fd65361d
 github.com/gorilla/mux             757bef944d0f21880861c2dd9c871ca543023cba
 
-github.com/hashicorp/vault/api     v0.6.2
-github.com/aws/aws-sdk-go          v1.4.12
-github.com/hashicorp/consul/api    v0.7.0
+github.com/hashicorp/vault/api     v0.7.0
+github.com/aws/aws-sdk-go          v1.8.17
+github.com/hashicorp/consul/api    v0.8.1
 
 ## test
 github.com/onsi/ginkgo/ginkgo 39d2c24f8a92c88f7e7f4d8ec6c80d3cc8f5ac65

@@ -59,7 +59,6 @@ var _ = Describe("CentralBooking v1", func() {
         Describe("in aws", func() {
             It("processes request successfully", func() {
                 // @todo retrieves instance detail from aws
-                // @todo retrieves coord cluster consul server addresses from *somewhere*
 
                 // generates perm vault token
                 mockVaultClient.
@@ -74,8 +73,8 @@ var _ = Describe("CentralBooking v1", func() {
                             "instance_id": "i-04c9c4c4",
                             "role":        "cluster-server",
                         },
-                        Lease: "72h",
-                        NoParent: true,
+                        Period: "72h", // token good forever as long as it's renewed
+                        NoParent: true, // orphan; could use CreateOrphanToken instead
                     }).
                     Return(
                         &vaultapi.Secret{
@@ -84,7 +83,10 @@ var _ = Describe("CentralBooking v1", func() {
                             Renewable: false,
                             Auth: &vaultapi.SecretAuth{
                                 ClientToken: "generated-perm-token",
-                                Policies: []string{ "instance-management" },
+                                Policies: []string{
+                                    "default", // included by … default
+                                    "instance-management",
+                                },
                                 Metadata: map[string]string{
                                     "environment": "dev",
                                     "provider":    "aws",
@@ -93,8 +95,8 @@ var _ = Describe("CentralBooking v1", func() {
                                     "instance_id": "i-04c9c4c4",
                                     "role":        "cluster-server",
                                 },
-                                LeaseDuration: 0,
-                                Renewable: false,
+                                LeaseDuration: 259200, // 72h
+                                Renewable: true, // wicked important
                             },
                         },
                         nil,
